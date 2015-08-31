@@ -173,6 +173,13 @@ SSDL2015::initialize(){
   addWorkflow( kGlobalFake, "Fake" );
   addWorkflow( kWZCR, "WZCR");
   
+  _SR = "2LepH"; 	setSignalRegions(); addWorkflow( k2LepH, "2LepH" );
+  _SR = "2LepHtH"; 	setSignalRegions(); addWorkflow( k2LepHtH, "2LepHtH" );
+  _SR = "2LepHtMetH"; 	setSignalRegions(); addWorkflow( k2LepHtMetH, "2LepHtMetH" );
+  _SR = "BR0H"; 	setSignalRegions(); addWorkflow( kBR0H, "BR0H" );
+
+
+  
   //extra input variables
   _lepflav = getCfgVarS("LEPFLAV");
   _leppt   = getCfgVarS("LEPPT"  );
@@ -294,6 +301,16 @@ SSDL2015::run() {
     counter("genselection");
   }
 
+  //some extra workflow for pre-BRs
+  //notice lepton pt and lepton flav cfg options not applied at this point
+  if (!_isFake) {
+    _SR = "2LepH"; if (testRegion()) {setWorkflow(k2LepH); fillhistos(); counter("selected");}
+    _SR = "2LepHtH"; if (testRegion()) {setWorkflow(k2LepHtH); fillhistos(); counter("selected");}
+    _SR = "2LepHtMetH"; if (testRegion()) {setWorkflow(k2LepHtMetH); fillhistos(); counter("selected");}
+    _SR = "BR0H"; if (testRegion()) {setWorkflow(kBR0H); fillhistos(); counter("selected");}
+      
+  }
+
   //MC check for FR --> one fake only
   if(!_isFake) {
     setWorkflow(kGlobal); //MANDATORY (otherwise double counting in other categories)
@@ -349,6 +366,7 @@ SSDL2015::run() {
   fillhistos();//fill histos for kGlobal and kGlobalFake
   
   if(_categorization) {
+  
     categorize();
     
     if(_isFake) {
@@ -1077,7 +1095,17 @@ SSDL2015::setSignalRegions() {
     setSelLine("LL:=:ll|MT:>=:120|MET:>=:50|NJ:>=:2|HT:>:300");
   }
 
-
+  //pre-baselines
+  else if ( _SR == "2LepH") {
+    setSelLine("LL:=:hh|NB:>=:0|NJ:>=:0");
+  }
+  else if ( _SR == "2LepHtH") {
+    setSelLine("LL:=:hh|NB:>=:0|NJ:>=:2|HT:>=:80");
+  }
+  else if ( _SR == "2LepHtMetH") {
+    setSelLine("LL:=:hh|NB:>=:0|MET:>:30|NJ:>=:0|HT:<:500");
+    setSelLine("LL:=:hh|NB:>=:0|NJ:>=:0|HT:>=:500");
+  }
 
   //baselines =============================================================
   //so stupid.....
