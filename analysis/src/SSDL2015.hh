@@ -105,7 +105,12 @@ private:
 
 	kGlobalFake,
 	
-	kWZCR
+	kWZCR,
+	
+	k2LepH, k2LepHtH, k2LepHtMetH, kBR0H
+	//,
+	//k2LepH, k2LepHtH, k2LepHtMetH, kBR0H,
+	//k2LepH, k2LepHtH, k2LepHtMetH, kBR0H
   };
 
   enum {kNoGenMatch=0, kMisMatchPdgId,
