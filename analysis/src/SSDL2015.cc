@@ -1100,7 +1100,7 @@ SSDL2015::setSignalRegions() {
     setSelLine("LL:=:hh|NB:>=:0|NJ:>=:0");
   }
   else if ( _SR == "2LepHtH") {
-    setSelLine("LL:=:hh|NB:>=:0|NJ:>=:2|HT:>=:80");
+    setSelLine("LL:=:hh|NB:>=:0|NJ:>=:0|HT:>=:80");
   }
   else if ( _SR == "2LepHtMetH") {
     setSelLine("LL:=:hh|NB:>=:0|MET:>:30|NJ:>=:0|HT:<:500");
