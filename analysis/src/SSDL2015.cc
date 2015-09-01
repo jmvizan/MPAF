@@ -172,7 +172,12 @@ SSDL2015::initialize(){
 
   addWorkflow( kGlobalFake, "Fake" );
   addWorkflow( kWZCR, "WZCR");
-  
+  addWorkflow( kWZCR_wz, "WZCR_wz");
+  addWorkflow( kWZCR_wzHt, "WZCR_wzHt");
+  addWorkflow( kWZCR_wzHtNj, "WZCR_wzHtNj");
+  addWorkflow( kWZCR_wzHtNjNbj, "WZCR_wzHtNjNbj");
+  addWorkflow( kWZCR_wzHtNjNbjMet, "WZCR_wzHtNjNbjMet"); 
+   
   _SR = "2LepH"; 	setSignalRegions(); addWorkflow( k2LepH, "2LepH" );
   _SR = "2LepHtH"; 	setSignalRegions(); addWorkflow( k2LepHtH, "2LepHtH" );
   _SR = "2LepHtMetH"; 	setSignalRegions(); addWorkflow( k2LepHtMetH, "2LepHtMetH" );
@@ -823,16 +828,21 @@ SSDL2015::wzCRSelection() {
   if(_susyMod->passMllMultiVeto( _l1Cand, &_looseLeps, 76, 106, true) &&
      _susyMod->passMllMultiVeto( _l2Cand, &_looseLeps, 76, 106, true) ) return;
   counter("Z selection");
+  setWorkflow(kWZCR_wz); fillhistos(); setWorkflow(kWZCR);
     
   // now apply tighter requirements on MET, HT, MT... 
   if(!makeCut(_HT > 80., "H_{T} > 80 GeV")) return;
+  setWorkflow(kWZCR_wzHt); fillhistos(); setWorkflow(kWZCR);
   if(!makeCut(_nJets>=2, "n_{jets} >= 2")) return;
+  setWorkflow(kWZCR_wzHtNj); fillhistos(); setWorkflow(kWZCR);
   if(!makeCut(_nBJets==0,"n_{bjets} = 0")) return;
+  setWorkflow(kWZCR_wzHtNjNbj); fillhistos(); setWorkflow(kWZCR);
 
   // for the moment is not fully exclusive with 3L but can be easily done by uncommenting these
   //  if(!makeCut((_HT<200 && _met->pt()>50 && _met->pt()<100) ||
   //	      (_HT>200 && _met->pt()<50),"MET cut  ")) return;
   if(!makeCut(_met->pt()>50, "MET > 50 GeV")) return;
+  setWorkflow(kWZCR_wzHtNjNbjMet); fillhistos(); setWorkflow(kWZCR);
 
   fillhistos();//fill histos for kWZCR
     

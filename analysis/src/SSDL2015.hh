@@ -106,6 +106,12 @@ private:
 	kGlobalFake,
 	
 	kWZCR,
+	kWZCR_wz,
+	kWZCR_wzHt,
+	kWZCR_wzHtNj,
+	kWZCR_wzHtNjNbj,
+	kWZCR_wzHtNjNbjMet,
+	
 	
 	k2LepH, k2LepHtH, k2LepHtMetH, kBR0H
 	//,
