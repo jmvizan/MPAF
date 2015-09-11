@@ -44,9 +44,11 @@ private:
   void retrieveObjects();
   bool ssLeptonSelection();
   void selectLeptons();
+  void selectLeptons3l();
 
   //==============================
   void wzCRSelection();
+  void WZ3lSelection();
   void setSignalRegions();
   void setSelLine(string str);
   //void setCut(string var, float valCut, string cType, float upValCut=0);
@@ -112,6 +114,15 @@ private:
 	kWZCR_wzHtNjNbj,
 	kWZCR_wzHtNjNbjMet,
 	
+	kWZSM,
+	kWZSM_3l,
+	kWZSM_3lwz,
+	kWZSM_3lwzZsel,
+	kWZSM_3lwzZselWsel,
+	kWZSM_3lwzZselWselNbj1,
+	kWZSM_3lwzZselWselNbj0,
+	
+	
 	
 	k2LepH, k2LepHtH, k2LepHtMetH, kBR0H
 	//,
@@ -162,6 +173,9 @@ private:
   CandList _tightLeps10;
   std::vector<unsigned int>  _tightLeps10Idx;
 
+  CandList _tightLeps20;
+  std::vector<unsigned int>  _tightLeps20Idx;
+
   CandList _tightLepsVeto10;
   std::vector<unsigned int>  _tightLepsVeto10Idx;
 
@@ -184,6 +198,13 @@ private:
   int _idxL1;
   int _idxL2; 
  
+  //WZ stuff
+  Candidate * _lZ1Cand;
+  Candidate * _lZ2Cand;
+  Candidate * _lWCand;
+  int _idxLZ1;
+  int _idxLZ2; 
+  int _idxLW; 
 
   string _lepflav;
   string _leppt;
@@ -201,6 +222,7 @@ private:
 
   vector<string> _categs;
   bool _categorization;
+  int _WZstep;
 
   vector<TVector2> _uncleanJets;
   vector<TVector2> _uncleanFwdJets;

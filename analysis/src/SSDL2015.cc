@@ -178,6 +178,15 @@ SSDL2015::initialize(){
   addWorkflow( kWZCR_wzHtNjNbj, "WZCR_wzHtNjNbj");
   addWorkflow( kWZCR_wzHtNjNbjMet, "WZCR_wzHtNjNbjMet"); 
    
+  addWorkflow( kWZSM, "WZSM");
+  addWorkflow( kWZSM_3l, "WZSM_3l");
+  addWorkflow( kWZSM_3lwz, "WZSM_3lwz");
+  addWorkflow( kWZSM_3lwzZsel, "WZSM_3lwzZsel");
+  addWorkflow( kWZSM_3lwzZselWsel, "WZSM_3lwzZselWsel");
+  addWorkflow( kWZSM_3lwzZselWselNbj1, "WZSM_3lwzZselWselNbj1");
+  addWorkflow( kWZSM_3lwzZselWselNbj0, "WZSM_3lwzZselWselNbj0");  
+   
+   
   _SR = "2LepH"; 	setSignalRegions(); addWorkflow( k2LepH, "2LepH" );
   _SR = "2LepHtH"; 	setSignalRegions(); addWorkflow( k2LepHtH, "2LepHtH" );
   _SR = "2LepHtMetH"; 	setSignalRegions(); addWorkflow( k2LepHtMetH, "2LepHtMetH" );
@@ -191,6 +200,7 @@ SSDL2015::initialize(){
   _SR      = getCfgVarS("SR"     );
   _FR      = getCfgVarS("FR"     );
   _categorization = getCfgVarI("categorization");
+  _WZstep = getCfgVarI("WZstep");
 
 //  vector<string> jess;
 //  jess.push_back("Jet_pt");
@@ -285,6 +295,11 @@ SSDL2015::run() {
   counter("denominator");
   
   retrieveObjects();
+
+  if (_WZstep != -1 ){
+    WZ3lSelection();
+    return;
+  }
 
   if(!makeCut(ssLeptonSelection(),"SS Selection")) {
     // failed same-sign lepton selection, fill WZ control region
@@ -510,7 +525,8 @@ SSDL2015::retrieveObjects(){
   _tightLepsVeto10.clear();
   _tightLepsVeto10Idx.clear();
 
-  selectLeptons();
+  if (_WZstep == -1) selectLeptons();
+  else selectLeptons3l();
 
   
   _susyMod->cleanJets( &_looseLeps10, _jets, _jetsIdx, _bJets, _bJetsIdx);
@@ -802,6 +818,98 @@ SSDL2015::ssLeptonSelection() {
 
 //   return false;
 // }
+
+
+
+
+void 
+SSDL2015::WZ3lSelection() {
+  setWorkflow(kWZSM);
+  
+  
+  //step 0 only 3 leptons with pt > 10 GeV
+  if(!makeCut(_tightLeps10.size()==3,"Three leptons")) return;
+  setWorkflow(kWZSM_3l); fillhistos(); setWorkflow(kWZSM);
+  
+  
+  CandList candWZ =_susyMod->bestWZ( (&_tightLeps10), _idxLZ1, _idxLZ2, _idxLW);
+  
+  if (candWZ.size() < 3) return;
+  
+  _lZ1Cand = candWZ[0];
+  _lZ2Cand = candWZ[1];
+  _lWCand = candWZ[2];
+    
+  if(_lZ1Cand==nullptr || _lZ2Cand==nullptr || _lWCand==nullptr) return;
+  _idxLZ1 = _tightLeps10Idx[_idxLZ1];
+  _idxLZ2 = _tightLeps10Idx[_idxLZ2];
+  _idxLW = _tightLeps10Idx[_idxLW];
+  
+  if (_lepflav=="eee") {
+    if(std::abs(_lZ1Cand->pdgId())!=11 ) return;
+    if(std::abs(_lZ2Cand->pdgId())!=11 ) return;
+    if(std::abs(_lWCand->pdgId())!=11 ) return;
+  }
+  if (_lepflav=="eem") {
+    if(std::abs(_lZ1Cand->pdgId())!=11 ) return;
+    if(std::abs(_lZ2Cand->pdgId())!=11 ) return;
+    if(std::abs(_lWCand->pdgId())!=13 ) return;
+  }
+  if (_lepflav=="mme") {
+    if(std::abs(_lZ1Cand->pdgId())!=13 ) return;
+    if(std::abs(_lZ2Cand->pdgId())!=13 ) return;
+    if(std::abs(_lWCand->pdgId())!=11 ) return;
+  }
+  if (_lepflav=="mmm") {
+    if(std::abs(_lZ1Cand->pdgId())!=13 ) return;
+    if(std::abs(_lZ2Cand->pdgId())!=13 ) return;
+    if(std::abs(_lWCand->pdgId())!=13 ) return;
+  }
+  
+  
+  if(!makeCut( 1>0, "WZ candidate" ) ) return;
+  setWorkflow(kWZSM_3lwz); fillhistos(); setWorkflow(kWZSM);
+  
+  
+  float MllZ = Candidate::create(_lZ1Cand, _lZ2Cand)->mass();
+  if (std::fabs(MllZ - 90) > 30) return;
+  
+  if(!makeCut( _lZ1Cand->pt()>20, "Z sel" ) ) return;
+  setWorkflow(kWZSM_3lwzZsel); fillhistos(); setWorkflow(kWZSM);
+  
+  if (_met->pt() < 30) return;
+  
+  if (
+      (_lZ1Cand->dR(_lZ2Cand) < 0.1) ||
+      (_lZ1Cand->dR(_lWCand) < 0.1) ||
+      (_lWCand->dR(_lZ2Cand) < 0.1) 
+     ) return;
+
+  if(!makeCut( _lWCand->pt()>20, "W sel" ) ) return;
+  setWorkflow(kWZSM_3lwzZselWsel); fillhistos(); setWorkflow(kWZSM);
+  
+  
+  if(!makeCut(_nBJets<=1,"1 or 0 b-jets")) return;
+  setWorkflow(kWZSM_3lwzZselWselNbj1); fillhistos(); setWorkflow(kWZSM);
+  
+  if(!makeCut(_nBJets==0,"0 b-jets")) return;
+  setWorkflow(kWZSM_3lwzZselWselNbj0); fillhistos(); setWorkflow(kWZSM);
+  
+  
+  
+  
+  /*
+      CandList lepPair=_susyMod->bestSSPair( (&_tightLepsVeto10), true, false, 10, _idxL1, _idxL2);
+    if(lepPair.size()<2) return false;
+    _l1Cand = lepPair[0];
+    _l2Cand = lepPair[1];
+
+  */
+  
+  setWorkflow(kGlobal); 
+}
+
+
 void 
 SSDL2015::wzCRSelection() {
   
@@ -1537,6 +1645,92 @@ SSDL2015::passCERNSelection() {
 
 }
 
+//===========================================================================
+void
+SSDL2015::selectLeptons3l() {
+  for(size_t il=0;il<_vc->get("nLepGood"); il++) {
+
+    bool isMu=std::abs(_vc->get("LepGood_pdgId", il))==13;
+
+    Candidate* cand=Candidate::create(_vc->get("LepGood_pt", il),
+				      _vc->get("LepGood_eta", il),
+				      _vc->get("LepGood_phi", il),
+				      _vc->get("LepGood_pdgId", il),
+				      _vc->get("LepGood_charge", il),
+				      isMu?0.105:0.0005);
+
+    // cout<<" pt: "<<cand->pt()<<"  eta: "<<cand->eta()<<"   phi: "<<cand->phi()<<"  pdgId: "<<_vc->get("LepGood_pdgId", il)<<"   dxy: "<<_vc->get("LepGood_dxy",il)<<"  dz: "<<_vc->get("LepGood_dz",il)<<endl;
+
+    if(!looseLepton(il, cand->pdgId() ) ) continue;
+    _looseLeps.push_back(cand);
+    _looseLepsIdx.push_back(il);
+    
+    //cout<<" -> selected"<<endl;
+
+    if(cand->pt()<10) continue;
+    _looseLeps10.push_back(cand);
+    _looseLeps10Idx.push_back(il);
+    
+  }
+
+  //veto on loose leptons =====================
+  for(size_t il=0;il<_looseLeps.size();il++) {
+
+    // cout<<" pt:"<<_looseLeps[il]->pt()<<"  selected"<<"  "<<_susyMod->passMllMultiVeto( _looseLeps[il], &_looseLeps, 76, 106, true)<<"  "<<_susyMod->passMllMultiVeto( _looseLeps[il], &_looseLeps, 0, 12, true)<<endl;
+
+    if(!_susyMod->passMllMultiVeto( _looseLeps[il], &_looseLeps, 76, 106, true) ||
+       !_susyMod->passMllMultiVeto( _looseLeps[il], &_looseLeps, 0, 12, true) ) continue;
+
+   
+
+    _looseLepsVeto.push_back( _looseLeps[il]);
+    _looseLepsVetoIdx.push_back(_looseLepsIdx[il]);
+  }
+
+  //veto on loose leptons 10, likely the one to use for the fakes =====================
+  for(size_t il=0;il<_looseLeps10.size();il++) {
+    if(!_susyMod->passMllMultiVeto( _looseLeps10[il], &_looseLeps, 76, 106, true) ||
+       !_susyMod->passMllMultiVeto( _looseLeps10[il], &_looseLeps, 0, 12, true) ) continue;
+
+    _looseLepsVeto10.push_back(_looseLeps10[il]);
+    _looseLepsVeto10Idx.push_back(_looseLeps10Idx[il]);
+  }
+
+  //tight leptons definitions =================
+
+  for(size_t il=0;il<_looseLeps10.size();il++) {
+
+    if(!tightLepton(_looseLeps10Idx[il], _looseLeps10[il]->pdgId()) ) {
+      if(!fakableLepton(_looseLeps10Idx[il], _looseLeps10[il]->pdgId()) ) continue; //not a fakable object
+
+      _fakableLeps10.push_back(_looseLeps10[il]);
+      _fakableLeps10Idx.push_back(_looseLeps10Idx[il]);
+      
+      if(!_susyMod->passMllMultiVeto( _looseLeps10[il], &_looseLeps, 76, 106, true) ||
+	 !_susyMod->passMllMultiVeto( _looseLeps10[il], &_looseLeps, 0, 12, true) ) continue;
+
+      _fakableLepsVeto10.push_back(_looseLeps10[il]);
+      _fakableLepsVeto10Idx.push_back(_looseLeps10Idx[il]);
+
+      continue;
+    }
+    
+    _tightLeps10.push_back(_looseLeps10[il]);
+    _tightLeps10Idx.push_back(_looseLeps10Idx[il]);
+    
+    if(_looseLeps10[il]->pt() > 20) {
+      _tightLeps20.push_back(_looseLeps10[il]);
+      _tightLeps20Idx.push_back(_looseLeps10Idx[il]);
+    }
+    
+    if(!_susyMod->passMllMultiVeto( _looseLeps10[il], &_looseLeps, 76, 106, true) ||
+       !_susyMod->passMllMultiVeto( _looseLeps10[il], &_looseLeps, 0, 12, true) ) continue;
+    
+    _tightLepsVeto10.push_back(_looseLeps10[il]);
+    _tightLepsVeto10Idx.push_back(_looseLeps10Idx[il]);
+  }
+}
+
 
 //===========================================================================
 void
@@ -1662,8 +1856,10 @@ SSDL2015::varyMET() {
 }
 
 void SSDL2015::fillhistos() {
-  fill("l1Pt", (_idxFake==_idxL2)?(_l1Cand->pt()):_l2Cand->pt(), _weight );
-  fill("l2Pt", (_idxFake==_idxL2)?(_l2Cand->pt()):_l1Cand->pt(), _weight );
+  if (_WZstep == -1) {
+    fill("l1Pt", (_idxFake==_idxL2)?(_l1Cand->pt()):_l2Cand->pt(), _weight );
+    fill("l2Pt", (_idxFake==_idxL2)?(_l2Cand->pt()):_l1Cand->pt(), _weight );
+  }
   fill("HT"    , _HT       , _weight);
   fill("MET"   , _met->pt(), _weight);
   fill("MT"    , _mTmin        , _weight);
